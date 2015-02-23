@@ -137,7 +137,7 @@ int main(int argc, char** argv)
   rms::ColoredScan result = rms::fuseData(filtered, score);
 
   // Write to output file
-  std::ofstream outfile("out.txt");
+  std::ofstream outfile(argv[2]);
   if (!outfile)
   {
     std::cerr << "Could not open outfile\n";
