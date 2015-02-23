@@ -5,7 +5,7 @@
 
 namespace rms
 {
-  ColoredScan fuseData(const Scan& scan, const std::vector<double> scores)
+  ColoredScan fuseData(const Scan& scan, const std::vector<double>& scores)
   {
     int diff = (scan.x_.size() - scores.size()) / 2;
     ColoredScan result;

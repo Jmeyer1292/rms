@@ -11,6 +11,16 @@
 
 typedef rms::ScanVec::iterator scan_iter;
 
+static double test1(scan_iter a, scan_iter b)
+{
+  return rms::scoreAvgAbs<double>(a, b);
+}
+
+static double test4(scan_iter a, scan_iter b)
+{
+  return rms::scoreSkewness<double>(a, b);
+}
+
 static double test2(scan_iter a, scan_iter b)
 {
   return rms::scoreValleyPeak<double, scan_iter>(a,b);
@@ -42,17 +52,31 @@ static double local_line(scan_iter a, scan_iter b)
   }
 
   return test3(delta.begin(), delta.end());
-
 }
 
 int main(int argc, char** argv)
 {
   typedef typename rms::Scan::value_type FloatType;
 
-  if (argc < 2)
+  std::string operation {"rms"};  
+  unsigned long window = 101;
+
+  if (argc < 3)
   {
-    std::cout << "Usage: ./rms <scan_data_file>" << std::endl;
+    std::cout << "Usage: ./rms <scan_data_file> <output_file> [method [window_size]]" << std::endl;
     return 1;
+  }
+
+  if (argc >= 4)
+  {
+    std::cout << "Setting operation to " << argv[3] << "\n";
+    operation = argv[3];
+  }
+
+  if (argc >= 5)
+  {
+    std::cout << "Setting window to " << argv[4] << "\n";
+    window = std::stoul(argv[4]);
   }
 
   std::ifstream file (argv[1]);
@@ -80,12 +104,34 @@ int main(int argc, char** argv)
   rms::Scan delta = rms::lineAdjust(filtered, line);
 
   // Apply a surface roughness scoring function
-  std::size_t window = 201;
   std::size_t score_size = std::distance(delta.y_.begin() + window, delta.y_.end());
   std::vector<double> score(score_size, 0.0);
-  
-  kernel_op(delta.y_.begin(), delta.y_.begin() + window, delta.y_.end(), score.begin(), test3);
-  // kernel_op(filtered.y_.begin(), filtered.y_.begin() + window, filtered.y_.end(), score.begin(), local_line);
+
+  // Switch on operation
+  if (operation == "rms")
+  {
+    kernel_op(delta.y_.begin(), delta.y_.begin() + window, delta.y_.end(), score.begin(), test3);
+  } 
+  else if (operation == "pv")
+  {
+    kernel_op(delta.y_.begin(), delta.y_.begin() + window, delta.y_.end(), score.begin(), test2);
+  } 
+  else if (operation == "localline")
+  {
+    kernel_op(filtered.y_.begin(), filtered.y_.begin() + window, filtered.y_.end(), score.begin(), local_line);
+  }
+  else if (operation == "skew")
+  {
+    kernel_op(delta.y_.begin(), delta.y_.begin() + window, delta.y_.end(), score.begin(), test4);
+  }
+  else if (operation == "abs")
+  {
+    kernel_op(delta.y_.begin(), delta.y_.begin() + window, delta.y_.end(), score.begin(), test1);
+  }
+  else
+  {
+    throw std::runtime_error("Unrecognized operation");
+  }
 
   // Put the scores together with their respective data points
   rms::ColoredScan result = rms::fuseData(filtered, score);

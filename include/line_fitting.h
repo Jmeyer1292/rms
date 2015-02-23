@@ -134,8 +134,8 @@ namespace rms
   FloatType scoreSkewness(InputIt begin, InputIt end)
   {
     std::size_t n = std::distance(begin, end);
-    FloatType rms_cubed = std::pow(scoreRms(begin, end), 3.0);
-    FloatType sum_cubed = sumOp(begin, end, [](FloatType x) { return x * x * x; });
+    FloatType rms_cubed = std::pow(scoreRms<FloatType>(begin, end), 3.0);
+    FloatType sum_cubed = sumOp<FloatType>(begin, end, [](FloatType x) { return x * x * x; });
     return sum_cubed / (n * rms_cubed);
   }
   
